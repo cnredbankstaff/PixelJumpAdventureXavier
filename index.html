@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Jump Adventure</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    * {
+      font-family: 'Press Start 2P', cursive;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+    @keyframes confetti-fall {
+      0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100%) rotate(720deg); opacity: 0; }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+    }
+    .player {
+      transition: transform 0.1s;
+    }
+    .platform {
+      image-rendering: pixelated;
+    }
+    .goal {
+      animation: float 1.5s ease-in-out infinite;
+    }
+    .sparkle {
+      animation: sparkle 0.8s ease-in-out infinite;
+    }
+    .confetti {
+      animation: confetti-fall 3s linear forwards;
+    }
+    .shop-item {
+      transition: all 0.2s;
+    }
+    .shop-item:hover:not(:disabled) {
+      transform: scale(1.05);
+    }
+    .shop-item:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-slate-900 overflow-hidden">
+  <div id="app" class="h-full w-full flex flex-col"><!-- Title Screen -->
+   <div id="title-screen" class="h-full flex flex-col items-center justify-center bg-gradient-to-b from-indigo-900 via-purple-900 to-slate-900">
+    <div class="text-center">
+     <h1 id="main-title" class="text-2xl md:text-4xl text-yellow-400 mb-4 drop-shadow-lg">🎮 PIXEL JUMP</h1>
+     <p class="text-xs md:text-sm text-purple-300 mb-8">ADVENTURE</p>
+     <div class="space-y-4"><button onclick="startGame()" class="block w-48 mx-auto bg-green-500 hover:bg-green-400 text-white text-xs py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all"> ▶ START GAME </button> <button onclick="showLevelSelect()" class="block w-48 mx-auto bg-indigo-500 hover:bg-indigo-400 text-white text-xs py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all"> 🗺️ LEVEL SELECT </button> <button onclick="showShop()" class="block w-48 mx-auto bg-yellow-500 hover:bg-yellow-400 text-white text-xs py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all"> 🛍️ SHOP </button> <button onclick="showControls()" class="block w-48 mx-auto bg-blue-500 hover:bg-blue-400 text-white text-xs py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all"> 📋 CONTROLS </button>
+     </div>
+     <p class="text-purple-400 text-xs mt-8">20 STAGES TO CONQUER!</p>
+    </div>
+   </div><!-- Level Select Screen -->
+   <div id="level-select-screen" class="h-full hidden flex-col bg-gradient-to-b from-slate-900 to-slate-800 p-4 overflow-auto">
+    <div class="text-center mb-6">
+     <h2 class="text-2xl text-indigo-400 mb-2">🗺️ LEVEL SELECT</h2>
+     <p class="text-indigo-300 text-xs">Beat levels to unlock harder stages!</p>
+    </div>
+    <div class="grid grid-cols-5 gap-2 max-w-4xl mx-auto mb-6"><button onclick="jumpToLevel(1)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">1</button> <button onclick="jumpToLevel(2)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">2</button> <button onclick="jumpToLevel(3)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">3</button> <button onclick="jumpToLevel(4)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">4</button> <button onclick="jumpToLevel(5)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">5</button> <button onclick="jumpToLevel(6)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">6</button> <button onclick="jumpToLevel(7)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">7</button> <button onclick="jumpToLevel(8)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">8</button> <button onclick="jumpToLevel(9)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">9</button> <button onclick="jumpToLevel(10)" class="w-12 h-12 bg-green-600 hover:bg-green-500 text-white text-xs rounded font-bold">10</button> <button id="level-11" onclick="jumpToLevel(11)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-12" onclick="jumpToLevel(12)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-13" onclick="jumpToLevel(13)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-14" onclick="jumpToLevel(14)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-15" onclick="jumpToLevel(15)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-16" onclick="jumpToLevel(16)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-17" onclick="jumpToLevel(17)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-18" onclick="jumpToLevel(18)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-19" onclick="jumpToLevel(19)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button> <button id="level-20" onclick="jumpToLevel(20)" class="w-12 h-12 bg-slate-600 text-slate-400 text-xs rounded font-bold cursor-not-allowed" disabled>🔒</button>
+    </div>
+    <div class="flex gap-2 justify-center"><button onclick="showTitle()" class="bg-purple-500 hover:bg-purple-400 text-white text-xs py-3 px-6 rounded-lg"> ← BACK </button>
+    </div>
+   </div><!-- Shop Screen -->
+   <div id="shop-screen" class="h-full hidden flex-col bg-gradient-to-b from-slate-900 to-slate-800 p-4 overflow-auto">
+    <div class="text-center mb-6">
+     <h2 class="text-2xl text-yellow-400 mb-2">🛍️ SHOP</h2>
+     <p class="text-yellow-300 text-sm">💰 Coins: <span id="shop-coins">0</span></p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-6">
+     <div class="bg-slate-700 rounded-lg p-4 border-2 border-cyan-500">
+      <h3 class="text-cyan-400 text-xs mb-2">⚡ SPEED BOOST</h3>
+      <p class="text-white text-xs mb-3">Move 25% faster</p><button class="shop-item w-full bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-600 text-white text-xs py-2 px-4 rounded" id="btn-speed" onclick="buyUpgrade('speed', 50)"> <span id="speed-btn-text">BUY: 50 💰</span> </button>
+      <p id="speed-owned" class="text-green-400 text-xs mt-2 hidden">✓ OWNED</p>
+     </div>
+     <div class="bg-slate-700 rounded-lg p-4 border-2 border-purple-500">
+      <h3 class="text-purple-400 text-xs mb-2">🔄 DOUBLE JUMP</h3>
+      <p class="text-white text-xs mb-3">Jump twice in the air</p><button class="shop-item w-full bg-purple-500 hover:bg-purple-400 disabled:bg-gray-600 text-white text-xs py-2 px-4 rounded" id="btn-double" onclick="buyUpgrade('doubleJump', 75)"> <span id="double-btn-text">BUY: 75 💰</span> </button>
+      <p id="double-owned" class="text-green-400 text-xs mt-2 hidden">✓ OWNED</p>
+     </div>
+     <div class="bg-slate-700 rounded-lg p-4 border-2 border-green-500">
+      <h3 class="text-green-400 text-xs mb-2">🛡️ SHIELD</h3>
+      <p class="text-white text-xs mb-3">Survive one fall per level</p><button class="shop-item w-full bg-green-500 hover:bg-green-400 disabled:bg-gray-600 text-white text-xs py-2 px-4 rounded" id="btn-shield" onclick="buyUpgrade('shield', 100)"> <span id="shield-btn-text">BUY: 100 💰</span> </button>
+      <p id="shield-owned" class="text-green-400 text-xs mt-2 hidden">✓ OWNED</p>
+     </div>
+     <div class="bg-slate-700 rounded-lg p-4 border-2 border-yellow-500">
+      <h3 class="text-yellow-400 text-xs mb-2">🧲 COIN MAGNET</h3>
+      <p class="text-white text-xs mb-3">Coins attract to you</p><button class="shop-item w-full bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-600 text-white text-xs py-2 px-4 rounded" id="btn-magnet" onclick="buyUpgrade('magnet', 60)"> <span id="magnet-btn-text">BUY: 60 💰</span> </button>
+      <p id="magnet-owned" class="text-green-400 text-xs mt-2 hidden">✓ OWNED</p>
+     </div>
+    </div>
+    <div class="flex gap-2 justify-center"><button onclick="showTitle()" class="bg-purple-500 hover:bg-purple-400 text-white text-xs py-3 px-6 rounded-lg"> ← BACK </button>
+    </div>
+   </div><!-- Controls Screen -->
+   <div id="controls-screen" class="h-full hidden flex-col items-center justify-center bg-gradient-to-b from-slate-800 to-slate-900 p-4">
+    <h2 class="text-xl text-cyan-400 mb-8">CONTROLS</h2>
+    <div class="bg-slate-800 rounded-xl p-6 border-2 border-cyan-500 max-w-sm w-full">
+     <div class="space-y-4 text-xs">
+      <div class="flex items-center gap-4 text-white"><span class="bg-slate-700 px-3 py-2 rounded">← →</span> <span class="text-slate-300">Move Left/Right</span>
+      </div>
+      <div class="flex items-center gap-4 text-white"><span class="bg-slate-700 px-3 py-2 rounded">SPACE</span> <span class="text-slate-300">Jump</span>
+      </div>
+      <div class="flex items-center gap-4 text-white"><span class="bg-slate-700 px-3 py-2 rounded">↑ / W</span> <span class="text-slate-300">Jump (Alt)</span>
+      </div>
+     </div>
+     <div class="mt-6 pt-4 border-t border-slate-600">
+      <p class="text-yellow-400 text-xs">🏆 Reach the flag to complete each stage!</p>
+      <p class="text-yellow-400 text-xs mt-2">🛍️ Visit the shop to buy upgrades!</p>
+      <p class="text-red-400 text-xs mt-2">⚠️ Avoid spikes in harder levels!</p>
+     </div>
+    </div><button onclick="showTitle()" class="mt-8 bg-purple-500 hover:bg-purple-400 text-white text-xs py-3 px-6 rounded-lg"> ← BACK </button>
+   </div><!-- Game Screen -->
+   <div id="game-screen" class="h-full hidden flex-col bg-slate-900"><!-- HUD -->
+    <div class="flex justify-between items-center p-2 bg-slate-800 border-b-2 border-slate-700">
+     <div class="flex items-center gap-4"><span class="text-yellow-400 text-xs">STAGE: <span id="stage-num">1</span>/20</span> <span class="text-yellow-300 text-xs">💰 <span id="coin-display">0</span></span>
+     </div><span id="player-display" class="text-cyan-400 text-xs">PLAYER</span> <button onclick="showTitle()" class="text-red-400 hover:text-red-300 text-xs">✖ QUIT</button>
+    </div><!-- Game Canvas -->
+    <div id="game-container" class="flex-1 relative overflow-hidden">
+     <canvas id="game-canvas"></canvas><!-- Mobile Controls -->
+     <div class="absolute bottom-0 left-0 right-0 flex justify-between px-3 py-4 md:hidden bg-gradient-to-t from-slate-900 to-transparent">
+      <div class="flex gap-3"><button id="btn-left" class="w-16 h-16 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-full text-white text-2xl font-bold shadow-lg transition-all select-none touch-none">←</button> <button id="btn-right" class="w-16 h-16 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-full text-white text-2xl font-bold shadow-lg transition-all select-none touch-none">→</button>
+      </div><button id="btn-jump" class="w-16 h-16 bg-green-500 hover:bg-green-400 active:bg-green-600 rounded-full text-white text-2xl font-bold shadow-lg transition-all select-none touch-none">⬆</button>
+     </div>
+    </div>
+   </div><!-- Victory Screen -->
+   <div id="victory-screen" class="h-full hidden flex-col items-center justify-center bg-gradient-to-b from-yellow-900 via-orange-900 to-red-900 relative overflow-hidden">
+    <div id="confetti-container" class="absolute inset-0 pointer-events-none"></div>
+    <div class="text-center z-10">
+     <div class="text-6xl mb-4">
+      🏆
+     </div>
+     <h1 class="text-2xl md:text-4xl text-yellow-400 mb-4 sparkle">VICTORY!</h1>
+     <p id="victory-message" class="text-sm text-orange-300 mb-2">CONGRATULATIONS!</p>
+     <p class="text-xs text-yellow-200 mb-8">You completed all 20 stages!</p>
+     <div class="space-y-4"><button onclick="startGame()" class="block w-48 mx-auto bg-green-500 hover:bg-green-400 text-white text-xs py-3 px-6 rounded-lg shadow-lg"> 🔄 PLAY AGAIN </button> <button onclick="showTitle()" class="block w-48 mx-auto bg-purple-500 hover:bg-purple-400 text-white text-xs py-3 px-6 rounded-lg shadow-lg"> 🏠 MAIN MENU </button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      game_title: "PIXEL JUMP",
+      player_name: "PLAYER",
+      background_color: "#0f172a",
+      accent_color: "#facc15",
+      text_color: "#e2e8f0",
+      platform_color: "#22c55e",
+      player_color: "#3b82f6"
+    };
+
+    let config = { ...defaultConfig };
+    let currentStage = 1;
+    let gameRunning = false;
+    let coinsCollected = 0;
+    let collectedCoinsThisStage = [];
+    let canvas, ctx;
+    let player, platforms, goal, coins, spikes;
+    let keys = {};
+    let animationId;
+    let levelSelectMode = false;
+    let unlockedLevel = 10;
+
+    let upgrades = {
+      speed: false,
+      doubleJump: false,
+      shield: false,
+      magnet: false
+    };
+    let doubleJumpUsed = false;
+    let shieldActive = true;
+
+    const stagesEasy = [
+      { platforms: [{ x: 0, y: 350, w: 200, h: 20 }, { x: 250, y: 320, w: 150, h: 20 }, { x: 450, y: 280, w: 200, h: 20 }], goal: { x: 600, y: 230 }, playerStart: { x: 50, y: 300 }, bgColor: '#1a1a2e', coins: [{ x: 150, y: 280, height: 80 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 150, h: 20 }, { x: 200, y: 320, w: 100, h: 20 }, { x: 100, y: 250, w: 100, h: 20 }, { x: 250, y: 180, w: 100, h: 20 }, { x: 400, y: 120, w: 150, h: 20 }], goal: { x: 500, y: 70 }, playerStart: { x: 50, y: 330 }, bgColor: '#16213e', coins: [{ x: 350, y: 200, height: 100 }], spikes: [] },
+      { platforms: [{ x: 0, y: 350, w: 100, h: 20 }, { x: 180, y: 350, w: 80, h: 20 }, { x: 340, y: 320, w: 80, h: 20 }, { x: 500, y: 280, w: 80, h: 20 }, { x: 660, y: 250, w: 140, h: 20 }], goal: { x: 720, y: 200 }, playerStart: { x: 30, y: 300 }, bgColor: '#0f3460', coins: [{ x: 260, y: 200, height: 120 }, { x: 590, y: 150, height: 120 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 80, h: 20 }, { x: 100, y: 340, w: 80, h: 20 }, { x: 200, y: 300, w: 80, h: 20 }, { x: 300, y: 260, w: 80, h: 20 }, { x: 400, y: 220, w: 80, h: 20 }, { x: 500, y: 180, w: 80, h: 20 }, { x: 600, y: 140, w: 120, h: 20 }], goal: { x: 660, y: 90 }, playerStart: { x: 20, y: 330 }, bgColor: '#1a1a40', coins: [{ x: 350, y: 150, height: 100 }], spikes: [] },
+      { platforms: [{ x: 0, y: 350, w: 120, h: 20 }, { x: 200, y: 280, w: 100, h: 20 }, { x: 50, y: 210, w: 100, h: 20 }, { x: 230, y: 150, w: 100, h: 20 }, { x: 400, y: 100, w: 150, h: 20 }], goal: { x: 480, y: 50 }, playerStart: { x: 30, y: 300 }, bgColor: '#2c003e', coins: [{ x: 130, y: 140, height: 180 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 60, h: 20 }, { x: 120, y: 340, w: 50, h: 20 }, { x: 230, y: 300, w: 50, h: 20 }, { x: 340, y: 260, w: 50, h: 20 }, { x: 450, y: 220, w: 50, h: 20 }, { x: 560, y: 180, w: 50, h: 20 }, { x: 670, y: 150, w: 100, h: 20 }], goal: { x: 700, y: 100 }, playerStart: { x: 15, y: 330 }, bgColor: '#1b1b2f', coins: [{ x: 290, y: 150, height: 140 }, { x: 510, y: 100, height: 130 }], spikes: [] },
+      { platforms: [{ x: 0, y: 100, w: 150, h: 20 }, { x: 200, y: 160, w: 100, h: 20 }, { x: 350, y: 220, w: 100, h: 20 }, { x: 500, y: 280, w: 100, h: 20 }, { x: 650, y: 340, w: 150, h: 20 }], goal: { x: 720, y: 290 }, playerStart: { x: 50, y: 50 }, bgColor: '#162447', coins: [{ x: 75, y: 200, height: 220 }, { x: 600, y: 100, height: 200 }], spikes: [] },
+      { platforms: [{ x: 0, y: 350, w: 70, h: 20 }, { x: 150, y: 300, w: 70, h: 20 }, { x: 300, y: 250, w: 70, h: 20 }, { x: 450, y: 200, w: 70, h: 20 }, { x: 600, y: 300, w: 70, h: 20 }, { x: 720, y: 350, w: 80, h: 20 }], goal: { x: 740, y: 300 }, playerStart: { x: 20, y: 300 }, bgColor: '#1f1f38', coins: [{ x: 225, y: 150, height: 140 }, { x: 530, y: 80, height: 150 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 100, h: 20 }, { x: 150, y: 330, w: 80, h: 20 }, { x: 80, y: 270, w: 80, h: 20 }, { x: 200, y: 210, w: 80, h: 20 }, { x: 100, y: 150, w: 80, h: 20 }, { x: 250, y: 100, w: 150, h: 20 }], goal: { x: 340, y: 50 }, playerStart: { x: 30, y: 330 }, bgColor: '#0d0d1a', coins: [{ x: 280, y: 210, height: 140 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 60, h: 20 }, { x: 120, y: 350, w: 50, h: 20 }, { x: 230, y: 310, w: 50, h: 20 }, { x: 150, y: 260, w: 50, h: 20 }, { x: 260, y: 210, w: 50, h: 20 }, { x: 370, y: 160, w: 50, h: 20 }, { x: 480, y: 120, w: 50, h: 20 }, { x: 590, y: 80, w: 50, h: 20 }, { x: 700, y: 50, w: 100, h: 20 }], goal: { x: 730, y: 0 }, playerStart: { x: 15, y: 330 }, bgColor: '#0a0a15', coins: [{ x: 190, y: 180, height: 150 }, { x: 430, y: 50, height: 120 }], spikes: [] }
+    ];
+
+    const stagesHard = [
+      { platforms: [{ x: 0, y: 380, w: 50, h: 20 }, { x: 100, y: 360, w: 45, h: 20, spikes: [25] }, { x: 200, y: 330, w: 45, h: 20 }, { x: 300, y: 290, w: 45, h: 20, spikes: [22] }, { x: 400, y: 240, w: 45, h: 20 }, { x: 500, y: 180, w: 45, h: 20, spikes: [22] }, { x: 600, y: 120, w: 45, h: 20 }, { x: 700, y: 80, w: 100, h: 20 }], goal: { x: 740, y: 30 }, playerStart: { x: 10, y: 330 }, bgColor: '#1a0a2e', coins: [{ x: 250, y: 200, height: 160 }, { x: 550, y: 80, height: 140 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 70, h: 20 }, { x: 130, y: 360, w: 40, h: 20, spikes: [20] }, { x: 230, y: 340, w: 40, h: 20 }, { x: 330, y: 310, w: 40, h: 20, spikes: [20] }, { x: 430, y: 270, w: 40, h: 20 }, { x: 530, y: 220, w: 40, h: 20, spikes: [20] }, { x: 630, y: 160, w: 40, h: 20 }, { x: 710, y: 120, w: 90, h: 20 }], goal: { x: 740, y: 70 }, playerStart: { x: 15, y: 330 }, bgColor: '#2d1b4e', coins: [{ x: 180, y: 240, height: 140 }, { x: 380, y: 160, height: 150 }, { x: 580, y: 100, height: 130 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 80, h: 20 }, { x: 150, y: 350, w: 50, h: 20, spikes: [25] }, { x: 280, y: 310, w: 50, h: 20 }, { x: 410, y: 260, w: 50, h: 20, spikes: [25] }, { x: 540, y: 200, w: 50, h: 20 }, { x: 670, y: 140, w: 130, h: 20 }], goal: { x: 730, y: 90 }, playerStart: { x: 20, y: 330 }, bgColor: '#3d1a1a', coins: [{ x: 215, y: 180, height: 170 }, { x: 475, y: 100, height: 150 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 60, h: 20 }, { x: 140, y: 320, w: 50, h: 20, spikes: [25] }, { x: 280, y: 260, w: 50, h: 20 }, { x: 420, y: 200, w: 50, h: 20, spikes: [25] }, { x: 560, y: 150, w: 50, h: 20 }, { x: 700, y: 120, w: 80, h: 20 }], goal: { x: 735, y: 70 }, playerStart: { x: 15, y: 330 }, bgColor: '#1a2d3d', coins: [{ x: 210, y: 180, height: 160 }, { x: 490, y: 80, height: 180 }], spikes: [] },
+      { platforms: [{ x: 0, y: 80, w: 100, h: 20 }, { x: 130, y: 140, w: 80, h: 20, spikes: [40] }, { x: 250, y: 200, w: 80, h: 20 }, { x: 370, y: 260, w: 80, h: 20, spikes: [40] }, { x: 490, y: 310, w: 80, h: 20 }, { x: 610, y: 350, w: 150, h: 20 }], goal: { x: 680, y: 300 }, playerStart: { x: 40, y: 30 }, bgColor: '#2c1a3d', coins: [{ x: 190, y: 280, height: 160 }, { x: 430, y: 160, height: 150 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 50, h: 20 }, { x: 100, y: 340, w: 45, h: 20, spikes: [22] }, { x: 180, y: 290, w: 45, h: 20 }, { x: 260, y: 240, w: 45, h: 20, spikes: [22] }, { x: 340, y: 190, w: 45, h: 20 }, { x: 420, y: 140, w: 45, h: 20, spikes: [22] }, { x: 500, y: 90, w: 45, h: 20 }, { x: 580, y: 50, w: 120, h: 20 }], goal: { x: 630, y: 0 }, playerStart: { x: 10, y: 330 }, bgColor: '#1a1a4d', coins: [{ x: 220, y: 140, height: 180 }, { x: 460, y: 50, height: 140 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 70, h: 20 }, { x: 150, y: 340, w: 50, h: 20, spikes: [25] }, { x: 100, y: 280, w: 50, h: 20 }, { x: 250, y: 240, w: 50, h: 20, spikes: [25] }, { x: 200, y: 180, w: 50, h: 20 }, { x: 350, y: 140, w: 50, h: 20, spikes: [25] }, { x: 500, y: 100, w: 50, h: 20 }, { x: 650, y: 80, w: 150, h: 20 }], goal: { x: 710, y: 30 }, playerStart: { x: 20, y: 330 }, bgColor: '#3d2a1a', coins: [{ x: 175, y: 200, height: 160 }, { x: 325, y: 100, height: 170 }, { x: 575, y: 40, height: 120 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 60, h: 20 }, { x: 120, y: 350, w: 50, h: 20, spikes: [25] }, { x: 230, y: 300, w: 50, h: 20 }, { x: 160, y: 240, w: 50, h: 20, spikes: [25] }, { x: 280, y: 200, w: 50, h: 20 }, { x: 400, y: 160, w: 50, h: 20, spikes: [25] }, { x: 520, y: 120, w: 50, h: 20 }, { x: 640, y: 90, w: 100, h: 20 }], goal: { x: 680, y: 40 }, playerStart: { x: 15, y: 330 }, bgColor: '#2d1a3d', coins: [{ x: 195, y: 160, height: 170 }, { x: 350, y: 100, height: 140 }, { x: 580, y: 60, height: 100 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 70, h: 20 }, { x: 140, y: 340, w: 60, h: 20, spikes: [30] }, { x: 80, y: 280, w: 60, h: 20 }, { x: 200, y: 230, w: 60, h: 20, spikes: [30] }, { x: 120, y: 170, w: 60, h: 20 }, { x: 260, y: 120, w: 60, h: 20, spikes: [30] }, { x: 400, y: 80, w: 60, h: 20 }, { x: 530, y: 50, w: 70, h: 20 }, { x: 700, y: 30, w: 100, h: 20 }], goal: { x: 750, y: 0 }, playerStart: { x: 20, y: 330 }, bgColor: '#1a0a1a', coins: [{ x: 140, y: 200, height: 160 }, { x: 290, y: 100, height: 150 }, { x: 470, y: 50, height: 120 }], spikes: [] },
+      { platforms: [{ x: 0, y: 380, w: 50, h: 20 }, { x: 100, y: 355, w: 40, h: 20, spikes: [20] }, { x: 190, y: 320, w: 40, h: 20 }, { x: 280, y: 280, w: 40, h: 20, spikes: [20] }, { x: 370, y: 235, w: 40, h: 20 }, { x: 460, y: 190, w: 40, h: 20, spikes: [20] }, { x: 550, y: 140, w: 40, h: 20 }, { x: 640, y: 90, w: 40, h: 20, spikes: [20] }, { x: 720, y: 50, w: 80, h: 20 }], goal: { x: 750, y: 0 }, playerStart: { x: 10, y: 330 }, bgColor: '#0a0a0f', coins: [{ x: 145, y: 200, height: 160 }, { x: 325, y: 120, height: 180 }, { x: 505, y: 80, height: 140 }, { x: 680, y: 30, height: 100 }], spikes: [] }
+    ];
+
+    const stages = [...stagesEasy, ...stagesHard];
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...defaultConfig, ...newConfig };
+          updateUI();
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [
+            {
+              get: () => cfg.background_color || defaultConfig.background_color,
+              set: (v) => { cfg.background_color = v; window.elementSdk.setConfig({ background_color: v }); }
+            },
+            {
+              get: () => cfg.accent_color || defaultConfig.accent_color,
+              set: (v) => { cfg.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); }
+            },
+            {
+              get: () => cfg.platform_color || defaultConfig.platform_color,
+              set: (v) => { cfg.platform_color = v; window.elementSdk.setConfig({ platform_color: v }); }
+            },
+            {
+              get: () => cfg.player_color || defaultConfig.player_color,
+              set: (v) => { cfg.player_color = v; window.elementSdk.setConfig({ player_color: v }); }
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ["game_title", cfg.game_title || defaultConfig.game_title],
+          ["player_name", cfg.player_name || defaultConfig.player_name]
+        ])
+      });
+    }
+
+    function updateUI() {
+      document.getElementById('main-title').textContent = `🎮 ${config.game_title || defaultConfig.game_title}`;
+      document.getElementById('player-display').textContent = config.player_name || defaultConfig.player_name;
+      document.body.style.backgroundColor = config.background_color || defaultConfig.background_color;
+    }
+
+    function updateCoinDisplay() {
+      document.getElementById('coin-display').textContent = coinsCollected;
+      document.getElementById('shop-coins').textContent = coinsCollected;
+    }
+
+    function updateLevelSelectUnlocks() {
+      for (let i = 11; i <= 20; i++) {
+        const btn = document.getElementById(`level-${i}`);
+        if (i <= unlockedLevel + 1) {
+          btn.disabled = false;
+          btn.classList.remove('bg-slate-600', 'text-slate-400', 'cursor-not-allowed');
+          btn.classList.add('bg-red-600', 'hover:bg-red-500', 'text-white');
+          btn.textContent = i;
+        }
+      }
+    }
+
+    function showTitle() {
+      stopGame();
+      document.getElementById('title-screen').classList.remove('hidden');
+      document.getElementById('title-screen').classList.add('flex');
+      document.getElementById('controls-screen').classList.add('hidden');
+      document.getElementById('shop-screen').classList.add('hidden');
+      document.getElementById('level-select-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.add('hidden');
+      document.getElementById('victory-screen').classList.add('hidden');
+    }
+
+    function showLevelSelect() {
+      updateLevelSelectUnlocks();
+      document.getElementById('title-screen').classList.add('hidden');
+      document.getElementById('level-select-screen').classList.remove('hidden');
+      document.getElementById('level-select-screen').classList.add('flex');
+    }
+
+    function jumpToLevel(level) {
+      if (level <= unlockedLevel + 1 || level <= 10) {
+        levelSelectMode = true;
+        currentStage = level;
+        startGame();
+      }
+    }
+
+    function showShop() {
+      updateShopUI();
+      document.getElementById('title-screen').classList.add('hidden');
+      document.getElementById('shop-screen').classList.remove('hidden');
+      document.getElementById('shop-screen').classList.add('flex');
+    }
+
+    function updateShopUI() {
+      document.getElementById('shop-coins').textContent = coinsCollected;
+      
+      const items = [
+        { id: 'speed', cost: 50, key: 'speed' },
+        { id: 'double', cost: 75, key: 'doubleJump' },
+        { id: 'shield', cost: 100, key: 'shield' },
+        { id: 'magnet', cost: 60, key: 'magnet' }
+      ];
+
+      items.forEach(item => {
+        const btn = document.getElementById(`btn-${item.id}`);
+        const owned = document.getElementById(`${item.id}-owned`);
+        const btnText = document.getElementById(`${item.id}-btn-text`);
+
+        if (upgrades[item.key]) {
+          btn.disabled = true;
+          btn.classList.add('hidden');
+          owned.classList.remove('hidden');
+        } else {
+          btn.disabled = coinsCollected < item.cost;
+          btn.classList.remove('hidden');
+          owned.classList.add('hidden');
+          btnText.textContent = `BUY: ${item.cost} 💰`;
+        }
+      });
+    }
+
+    function buyUpgrade(upgrade, cost) {
+      if (coinsCollected >= cost && !upgrades[upgrade]) {
+        coinsCollected -= cost;
+        upgrades[upgrade] = true;
+        updateCoinDisplay();
+        updateShopUI();
+      }
+    }
+
+    function showControls() {
+      document.getElementById('title-screen').classList.add('hidden');
+      document.getElementById('controls-screen').classList.remove('hidden');
+      document.getElementById('controls-screen').classList.add('flex');
+    }
+
+    function showVictory() {
+      stopGame();
+      document.getElementById('game-screen').classList.add('hidden');
+      document.getElementById('victory-screen').classList.remove('hidden');
+      document.getElementById('victory-screen').classList.add('flex');
+      document.getElementById('victory-message').textContent = `WELL DONE, ${config.player_name || defaultConfig.player_name}!`;
+      createConfetti();
+    }
+
+    function createConfetti() {
+      const container = document.getElementById('confetti-container');
+      container.innerHTML = '';
+      const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd'];
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti absolute w-3 h-3';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.top = '-20px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+        container.appendChild(confetti);
+      }
+    }
+
+    function startGame() {
+      if (!levelSelectMode) {
+        currentStage = 1;
+      }
+      coinsCollected = 0;
+      doubleJumpUsed = false;
+      shieldActive = upgrades.shield;
+      document.getElementById('title-screen').classList.add('hidden');
+      document.getElementById('title-screen').classList.remove('flex');
+      document.getElementById('level-select-screen').classList.add('hidden');
+      document.getElementById('victory-screen').classList.add('hidden');
+      document.getElementById('shop-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+      document.getElementById('game-screen').classList.add('flex');
+      initCanvas();
+      loadStage(currentStage);
+      updateCoinDisplay();
+      gameRunning = true;
+      gameLoop();
+    }
+
+    function initCanvas() {
+      canvas = document.getElementById('game-canvas');
+      const container = document.getElementById('game-container');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      ctx = canvas.getContext('2d');
+    }
+
+    function loadStage(stageNum) {
+      const stage = stages[stageNum - 1];
+      const scaleX = canvas.width / 800;
+      const scaleY = canvas.height / 450;
+
+      const speedMult = upgrades.speed ? 1.25 : 1;
+      const jumpMult = upgrades.doubleJump ? 1.1 : 1;
+
+      player = {
+        x: stage.playerStart.x * scaleX,
+        y: stage.playerStart.y * scaleY,
+        w: 30 * Math.min(scaleX, scaleY),
+        h: 40 * Math.min(scaleX, scaleY),
+        vx: 0,
+        vy: 0,
+        onGround: false,
+        speed: 5 * scaleX * speedMult,
+        jumpPower: -12 * scaleY * jumpMult,
+        gravity: 0.5 * scaleY
+      };
+
+      platforms = stage.platforms.map(p => ({
+        x: p.x * scaleX,
+        y: p.y * scaleY,
+        w: p.w * scaleX,
+        h: p.h * scaleY,
+        spikes: p.spikes || []
+      }));
+
+      goal = {
+        x: stage.goal.x * scaleX,
+        y: stage.goal.y * scaleY,
+        w: 40 * Math.min(scaleX, scaleY),
+        h: 50 * Math.min(scaleX, scaleY)
+      };
+
+      coins = (stage.coins || []).map(c => ({
+        x: c.x * scaleX,
+        y: c.y * scaleY,
+        radius: 15 * Math.min(scaleX, scaleY),
+        id: Math.random()
+      }));
+
+      spikes = [];
+
+      collectedCoinsThisStage = [];
+      doubleJumpUsed = false;
+      shieldActive = upgrades.shield;
+      document.getElementById('stage-num').textContent = stageNum;
+    }
+
+    function stopGame() {
+      gameRunning = false;
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+      update();
+      render();
+      animationId = requestAnimationFrame(gameLoop);
+    }
+
+    function update() {
+      if (keys['ArrowLeft'] || keys['KeyA']) {
+        player.vx = -player.speed;
+      } else if (keys['ArrowRight'] || keys['KeyD']) {
+        player.vx = player.speed;
+      } else {
+        player.vx *= 0.8;
+      }
+
+      if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && player.onGround) {
+        player.vy = player.jumpPower;
+        player.onGround = false;
+        doubleJumpUsed = false;
+      } else if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && upgrades.doubleJump && !doubleJumpUsed && player.vy > 0) {
+        player.vy = player.jumpPower * 0.8;
+        doubleJumpUsed = true;
+      }
+
+      player.vy += player.gravity;
+      player.x += player.vx;
+      player.y += player.vy;
+
+      player.onGround = false;
+      for (const plat of platforms) {
+        if (player.x < plat.x + plat.w &&
+            player.x + player.w > plat.x &&
+            player.y < plat.y + plat.h &&
+            player.y + player.h > plat.y) {
+          
+          if (player.vy > 0 && player.y + player.h - player.vy <= plat.y + 5) {
+            player.y = plat.y - player.h;
+            player.vy = 0;
+            player.onGround = true;
+          } else if (player.vy < 0 && player.y - player.vy >= plat.y + plat.h - 5) {
+            player.y = plat.y + plat.h;
+            player.vy = 0;
+          } else if (player.vx > 0) {
+            player.x = plat.x - player.w;
+          } else if (player.vx < 0) {
+            player.x = plat.x + plat.w;
+          }
+        }
+      }
+
+      if (player.x < 0) player.x = 0;
+      if (player.x + player.w > canvas.width) player.x = canvas.width - player.w;
+      
+      if (player.y > canvas.height + 50) {
+        if (shieldActive) {
+          shieldActive = false;
+          loadStage(currentStage);
+        } else {
+          loadStage(currentStage);
+        }
+      }
+
+      // Spike collision
+      for (const plat of platforms) {
+        for (const spikePos of plat.spikes) {
+          const spike = {
+            x: plat.x + spikePos * (plat.w / 100),
+            y: plat.y - 15 * (player.w / 30),
+            w: 20 * (player.w / 30),
+            h: 20 * (player.w / 30)
+          };
+          if (player.x < spike.x + spike.w &&
+              player.x + player.w > spike.x &&
+              player.y < spike.y + spike.h &&
+              player.y + player.h > spike.y) {
+            if (shieldActive) {
+              shieldActive = false;
+              loadStage(currentStage);
+            } else {
+              loadStage(currentStage);
+            }
+          }
+        }
+      }
+
+      if (player.x < goal.x + goal.w &&
+          player.x + player.w > goal.x &&
+          player.y < goal.y + goal.h &&
+          player.y + player.h > goal.y) {
+        if (currentStage > unlockedLevel) {
+          unlockedLevel = currentStage;
+        }
+        if (currentStage >= 20) {
+          showVictory();
+        } else {
+          currentStage++;
+          loadStage(currentStage);
+        }
+      }
+
+      const magnetRange = upgrades.magnet ? 100 : 0;
+      for (let i = coins.length - 1; i >= 0; i--) {
+        const coin = coins[i];
+        const dx = (player.x + player.w / 2) - coin.x;
+        const dy = (player.y + player.h / 2) - coin.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < coin.radius + player.w / 2 + magnetRange) {
+          if (!collectedCoinsThisStage.includes(coin.id)) {
+            collectedCoinsThisStage.push(coin.id);
+            coinsCollected++;
+            updateCoinDisplay();
+            coins.splice(i, 1);
+          }
+        }
+      }
+    }
+
+    function render() {
+      const stage = stages[currentStage - 1];
+      
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, stage.bgColor);
+      gradient.addColorStop(1, '#000000');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < 30; i++) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+        ctx.fillRect(
+          (Math.sin(i * 50 + Date.now() * 0.001) + 1) * canvas.width / 2,
+          (Math.cos(i * 30) + 1) * canvas.height / 2,
+          2, 2
+        );
+      }
+
+      for (const coin of coins) {
+        const bobOffset = Math.sin(Date.now() * 0.005 + coin.id) * 8;
+        
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(coin.x, coin.y + bobOffset, coin.radius + 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(coin.x, coin.y + bobOffset, coin.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(coin.x - coin.radius * 0.3, coin.y + bobOffset - coin.radius * 0.3, coin.radius * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FF6B00';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `${coin.radius * 1.2}px "Press Start 2P"`;
+        ctx.fillText('$', coin.x, coin.y + bobOffset);
+      }
+
+      // Draw spikes on platforms
+      for (const plat of platforms) {
+        for (const spikePos of plat.spikes) {
+          const spikeX = plat.x + spikePos * (plat.w / 100);
+          const spikeY = plat.y - 15 * (player.w / 30);
+          const spikeW = 20 * (player.w / 30);
+          const spikeH = 20 * (player.w / 30);
+          
+          ctx.fillStyle = '#FF0000';
+          ctx.beginPath();
+          ctx.moveTo(spikeX + spikeW / 2, spikeY);
+          ctx.lineTo(spikeX + spikeW, spikeY + spikeH);
+          ctx.lineTo(spikeX, spikeY + spikeH);
+          ctx.closePath();
+          ctx.fill();
+          
+          ctx.strokeStyle = '#AA0000';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+
+      const platformColor = config.platform_color || defaultConfig.platform_color;
+      for (const plat of platforms) {
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(plat.x + 4, plat.y + 4, plat.w, plat.h);
+        
+        ctx.fillStyle = platformColor;
+        ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(plat.x, plat.y, plat.w, 4);
+        
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        for (let i = 0; i < plat.w; i += 10) {
+          ctx.fillRect(plat.x + i, plat.y + 8, 2, plat.h - 8);
+        }
+      }
+
+      const flagPole = goal.x + goal.w / 2;
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(flagPole - 3, goal.y, 6, goal.h + 20);
+      
+      const flagWave = Math.sin(Date.now() * 0.005) * 5;
+      ctx.fillStyle = config.accent_color || defaultConfig.accent_color;
+      ctx.beginPath();
+      ctx.moveTo(flagPole + 3, goal.y);
+      ctx.lineTo(flagPole + 35 + flagWave, goal.y + 15);
+      ctx.lineTo(flagPole + 3, goal.y + 30);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(flagPole + 20, goal.y + 15, 3 + Math.sin(Date.now() * 0.01) * 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      const playerColor = config.player_color || defaultConfig.player_color;
+      
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(player.x + 3, player.y + 3, player.w, player.h);
+      
+      ctx.fillStyle = playerColor;
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      if (shieldActive) {
+        ctx.strokeStyle = 'rgba(100, 200, 255, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(player.x + player.w / 2, player.y + player.h / 2, player.w / 1.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      
+      ctx.fillStyle = '#fff';
+      const eyeY = player.y + player.h * 0.25;
+      const eyeSize = player.w * 0.15;
+      ctx.fillRect(player.x + player.w * 0.2, eyeY, eyeSize, eyeSize);
+      ctx.fillRect(player.x + player.w * 0.6, eyeY, eyeSize, eyeSize);
+      
+      ctx.fillStyle = '#000';
+      const pupilOffset = player.vx > 0.5 ? 2 : player.vx < -0.5 ? -2 : 0;
+      ctx.fillRect(player.x + player.w * 0.25 + pupilOffset, eyeY + 2, eyeSize * 0.6, eyeSize * 0.6);
+      ctx.fillRect(player.x + player.w * 0.65 + pupilOffset, eyeY + 2, eyeSize * 0.6, eyeSize * 0.6);
+      
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(player.x + player.w * 0.3, player.y + player.h * 0.6, player.w * 0.4, player.h * 0.1);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.font = `${Math.min(canvas.width, canvas.height) * 0.04}px "Press Start 2P"`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`STAGE ${currentStage}`, canvas.width / 2, 40);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+        e.preventDefault();
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); keys['ArrowLeft'] = true; });
+    document.getElementById('btn-left').addEventListener('touchend', () => keys['ArrowLeft'] = false);
+    document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); keys['ArrowRight'] = true; });
+    document.getElementById('btn-right').addEventListener('touchend', () => keys['ArrowRight'] = false);
+    document.getElementById('btn-jump').addEventListener('touchstart', (e) => { e.preventDefault(); keys['Space'] = true; });
+    document.getElementById('btn-jump').addEventListener('touchend', () => keys['Space'] = false);
+
+    document.getElementById('btn-left').addEventListener('mousedown', () => keys['ArrowLeft'] = true);
+    document.getElementById('btn-left').addEventListener('mouseup', () => keys['ArrowLeft'] = false);
+    document.getElementById('btn-left').addEventListener('mouseleave', () => keys['ArrowLeft'] = false);
+    document.getElementById('btn-right').addEventListener('mousedown', () => keys['ArrowRight'] = true);
+    document.getElementById('btn-right').addEventListener('mouseup', () => keys['ArrowRight'] = false);
+    document.getElementById('btn-right').addEventListener('mouseleave', () => keys['ArrowRight'] = false);
+    document.getElementById('btn-jump').addEventListener('mousedown', () => keys['Space'] = true);
+    document.getElementById('btn-jump').addEventListener('mouseup', () => keys['Space'] = false);
+    document.getElementById('btn-jump').addEventListener('mouseleave', () => keys['Space'] = false);
+
+    updateUI();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ca517dfd7ec422f',t:'MTc3MDQ5MDQzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
